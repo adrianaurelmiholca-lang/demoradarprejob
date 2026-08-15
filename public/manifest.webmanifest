@@ -1,0 +1,12 @@
+{
+  "name": "PREJOB RADAR",
+  "short_name": "PREJOB Radar",
+  "description": "Ipoteze de explorat, nu verdicte profesionale.",
+  "lang": "ro",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fbff",
+  "theme_color": "#0b2e4f",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
