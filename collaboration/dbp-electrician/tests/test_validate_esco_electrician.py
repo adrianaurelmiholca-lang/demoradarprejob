@@ -37,6 +37,25 @@ class EscoCheckerTest(unittest.TestCase):
         self.assertIn('FIXTURE_MATCH_NOT_OFFICIAL', {r['validation_status'] for r in results})
         self.assertNotIn('VERIFIED_OFFICIAL', {r['validation_status'] for r in results})
 
+    def test_relation_mismatch_is_flagged(self):
+        rows = [dict(self.rows[0])]
+        rows[0]['relationship_in_attachment'] = 'optional'
+        result, _ = esco.verify(rows, self.fixture, 'live', 'sha', 'https://example.invalid')
+        self.assertEqual(result[0]['validation_status'], 'API_RELATION_REQUIRES_REVIEW')
+        self.assertIn('RELATION_TYPE_MISMATCH', result[0]['quality_flags'])
+
+    def test_matching_live_is_not_promoted_without_version(self):
+        rows = [dict(self.rows[0])]
+        rows[0]['skill_label_en_in_attachment'] = 'synthetic label'
+        result, _ = esco.verify(rows, self.fixture, 'live', 'sha', 'https://example.invalid')
+        self.assertEqual(result[0]['validation_status'], 'API_RELATION_CONFIRMED_VERSION_UNVERIFIED')
+
+    def test_skill_type_mismatch_is_flagged(self):
+        rows = [dict(self.rows[0])]
+        rows[0]['skill_type_in_attachment'] = 'knowledge'
+        result, _ = esco.verify(rows, self.fixture, 'live', 'sha', 'https://example.invalid')
+        self.assertIn('SKILL_TYPE_MISMATCH', result[0]['quality_flags'])
+
     def test_invalid_occupation(self):
         broken = copy.deepcopy(self.fixture)
         broken['uri'] = 'unexpected'
