@@ -23,7 +23,7 @@ python scripts/validate_esco_electrician.py --candidates data/electrician_candid
 ## Reguli
 
 1. Dacă DNS, HTTP sau JSON eșuează, toate înregistrările primesc `NOT_TESTED` și procesul are cod de ieșire 2.
-2. Doar un HTTP 200 obținut direct de script poate produce `VERIFIED_OFFICIAL`, iar versiunea ESCO rămâne neconfirmată până la verificarea metadatelor oficiale.
+2. HTTP 200 nu produce automat `VERIFIED_OFFICIAL`: o potrivire directă fără diferențe devine `API_RELATION_CONFIRMED_VERSION_UNVERIFIED`; neconcordanțele de etichetă, tip sau relație devin `API_RELATION_REQUIRES_REVIEW`. Promovarea în stratul validat DBP necesită verificarea versiunii și a provenienței.
 3. `NOT_FOUND_IN_API` nu înseamnă că URI-ul nu există: înseamnă că nu a fost găsit în relațiile ocupației din răspunsul obținut.
 4. Datele nu sunt încă importate în DBP, nu există API cu plată și nu se modifică `main`, Cloudflare, Google Drive sau datele de producție.
 5. **Nu comiteți automat în GitHub** răspunsurile API sau artefactele de test fără verificarea provenienței și a permisiunilor.
