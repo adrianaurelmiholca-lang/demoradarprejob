@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PREJOB DBP technical audit result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "auditor",
+    "verification_status",
+    "findings",
+    "source_references",
+    "limitations"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "auditor": {
+      "type": "string"
+    },
+    "verification_status": {
+      "enum": [
+        "UNVERIFIED",
+        "PARTIALLY_VERIFIED",
+        "VERIFIED_WITH_EVIDENCE",
+        "BLOCKED"
+      ]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "claim",
+          "status"
+        ],
+        "properties": {
+          "claim": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "CONFIRMED",
+              "REJECTED",
+              "NEEDS_VERIFICATION"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "source_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source",
+          "reference",
+          "checked_at"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
