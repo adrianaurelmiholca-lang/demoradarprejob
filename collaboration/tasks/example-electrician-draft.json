@@ -1,0 +1,25 @@
+{
+  "task_id": "PB-ESCO-ELECTRICIAN-001",
+  "territory": "RO-B-MUNICIPIU-BUCURESTI",
+  "occupation": "Electrician (pilot; definirea ocupatiei necesita validare oficiala)",
+  "objective": "Verifica metoda de validare a identificatorilor ESCO, ISCO si COR si propune teste reproductibile. Nu afirma echivalente fara sursa oficiala.",
+  "inputs": [
+    {
+      "source": "ESCO",
+      "reference": "https://esco.ec.europa.eu/en/use-esco/download",
+      "access": "PUBLIC"
+    },
+    {
+      "source": "COR",
+      "reference": "Registrul oficial COR - versiunea aplicabila la data verificarii",
+      "access": "PUBLIC"
+    }
+  ],
+  "constraints": [
+    "Nu utiliza date personale sau documente private.",
+    "Nu modifica date master, productie sau ramura main.",
+    "Noteaza explicit identificatorii nevalidati.",
+    "Nu lansa apeluri API platite."
+  ],
+  "status": "DRAFT"
+}
