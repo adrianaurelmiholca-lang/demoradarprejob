@@ -1,0 +1,19 @@
+{
+  "uri": "http://data.europa.eu/esco/occupation/4910419f-b4af-4f59-b544-9dbebc8a74f0",
+  "_links": {
+    "hasEssentialSkill": [
+      {
+        "uri": "http://data.europa.eu/esco/skill/b92758d4-4591-4df1-9ceb-f907aa71ebd9",
+        "title": "synthetic label",
+        "skillType": "http://data.europa.eu/esco/skill-type/skill"
+      }
+    ],
+    "hasOptionalSkill": [
+      {
+        "uri": "http://data.europa.eu/esco/skill/3f6dc31c-ceef-4e93-9d8a-b4b862cf9b51",
+        "title": "synthetic optional label",
+        "skillType": "http://data.europa.eu/esco/skill-type/skill"
+      }
+    ]
+  }
+}
