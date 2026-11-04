@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PREJOB DBP technical audit task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "territory",
+    "occupation",
+    "objective",
+    "inputs",
+    "constraints",
+    "status"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^PB-[A-Z0-9-]+$"
+    },
+    "territory": {
+      "const": "RO-B-MUNICIPIU-BUCURESTI"
+    },
+    "occupation": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "source",
+          "reference",
+          "access"
+        ],
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "access": {
+            "enum": [
+              "PUBLIC",
+              "AUTHORIZED_PRIVATE"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "READY_FOR_REVIEW",
+        "APPROVED_FOR_EXTERNAL_EXECUTION",
+        "COMPLETED",
+        "BLOCKED"
+      ]
+    }
+  }
+}
