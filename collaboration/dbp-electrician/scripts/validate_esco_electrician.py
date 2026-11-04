@@ -19,7 +19,7 @@ OCCUPATION = 'http://data.europa.eu/esco/occupation/4910419f-b4af-4f59-b544-9dbe
 ENDPOINT = 'https://ec.europa.eu/esco/api/resource/occupation'
 COLUMNS = ['occupation_uri', 'skill_uri', 'candidate_label_en', 'candidate_skill_type',
            'reported_relation', 'api_relation', 'api_label_en', 'api_skill_type',
-           'validation_status', 'evidence_sha256', 'api_url']
+           'validation_status', 'quality_flags', 'evidence_sha256', 'api_url']
 
 
 def candidates(path):
@@ -78,7 +78,26 @@ def verify(rows, payload, evidence_mode, sha, api_url):
     output = []
     for row in rows:
         match = indexed.get(row['skill_uri'])
-        status = ('VERIFIED_OFFICIAL' if evidence_mode == 'live' else 'FIXTURE_MATCH_NOT_OFFICIAL') if match else ('NOT_FOUND_IN_API' if evidence_mode == 'live' else 'FIXTURE_ABSENT_NOT_OFFICIAL')
+        flags = []
+        if not match:
+            status = 'NOT_FOUND_IN_API' if evidence_mode == 'live' else 'FIXTURE_ABSENT_NOT_OFFICIAL'
+        else:
+            relation, label, skill_type_uri = match
+            skill_type = skill_type_uri.rsplit('/', 1)[-1]
+            if relation != row['relationship_in_attachment']:
+                flags.append('RELATION_TYPE_MISMATCH')
+            if skill_type != row['skill_type_in_attachment']:
+                flags.append('SKILL_TYPE_MISMATCH')
+            if label != row['skill_label_en_in_attachment']:
+                flags.append('LABEL_MISMATCH')
+            if not label or skill_type not in ('skill', 'knowledge'):
+                flags.append('MISSING_OR_UNEXPECTED_API_FIELDS')
+            if evidence_mode != 'live':
+                status = 'FIXTURE_MATCH_NOT_OFFICIAL'
+            elif flags:
+                status = 'API_RELATION_REQUIRES_REVIEW'
+            else:
+                status = 'API_RELATION_CONFIRMED_VERSION_UNVERIFIED'
         output.append({
             'occupation_uri': row['occupation_uri'], 'skill_uri': row['skill_uri'],
             'candidate_label_en': row['skill_label_en_in_attachment'],
@@ -87,7 +106,8 @@ def verify(rows, payload, evidence_mode, sha, api_url):
             'api_relation': match[0] if match else '',
             'api_label_en': match[1] if match else '',
             'api_skill_type': match[2].rsplit('/', 1)[-1] if match else '',
-            'validation_status': status, 'evidence_sha256': sha, 'api_url': api_url
+            'validation_status': status, 'quality_flags': '|'.join(flags),
+            'evidence_sha256': sha, 'api_url': api_url
         })
     return output, indexed
 
@@ -99,7 +119,8 @@ def not_tested(rows):
         'candidate_skill_type': row['skill_type_in_attachment'],
         'reported_relation': row['relationship_in_attachment'], 'api_relation': '',
         'api_label_en': '', 'api_skill_type': '',
-        'validation_status': 'NOT_TESTED', 'evidence_sha256': '', 'api_url': ''
+        'validation_status': 'NOT_TESTED', 'quality_flags': '',
+        'evidence_sha256': '', 'api_url': ''
     } for row in rows]
 
 
@@ -152,8 +173,8 @@ def main(argv=None):
         'candidate_count': len(rows), 'api_relation_count': count_api,
         'counts': counts, 'error': error,
         'warning': ('Fixture output is never official evidence.' if args.fixture else
-                    'Status VERIFIED_OFFICIAL is based on a directly fetched HTTP 200 response; '
-                    'version and domain provenance must be separately reviewed.'),
+                    'API response (if retrieved) confirms only the observed relationship at requested '
+                    'version; version and provenance review required before any DBP promotion.'),
     }
     (args.out / 'esco_electrician_manifest.json').write_text(json.dumps(meta, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     print(json.dumps(meta, indent=2, ensure_ascii=False))
