@@ -1,6 +1,6 @@
-# Approved for placement in main as workflow definition only. Manual dispatch remains a separate action.
-# No push, pull_request or schedule triggers; no commits or deployments.
-name: PREJOB ESCO Electrician – manual evidence check
+# PREJOB Directive 007: scheduled evidence collection only.
+# Public ESCO data; no private records, SQL inserts, commits, deployments, or AI verdicts.
+name: PREJOB ESCO Electrician – automatic evidence check
 
 on:
   workflow_dispatch:
@@ -13,41 +13,98 @@ on:
           - latest
           - v1.2.0
         default: latest
+  schedule:
+    - cron: '0 8 * * 1'
+      timezone: 'Europe/Bucharest'
 
 permissions:
   contents: read
+  actions: read
+
+concurrency:
+  group: prejob-electrician-esco-evidence
+  cancel-in-progress: false
 
 jobs:
   verify-esco:
-    # Defense in depth: even if accidentally installed on main, run only for the staging branch.
-    if: github.ref == 'refs/heads/work/dbp-bucuresti-multiai-2026-11-04'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-
+    timeout-minutes: 10
     steps:
-      - name: Check out staging source (read-only)
+      - name: Check out approved staging validator (never run application code)
         uses: actions/checkout@v4
         with:
+          ref: work/dbp-bucuresti-multiai-2026-11-04
           persist-credentials: false
 
-      - name: Run offline unit tests
+      - name: Run offline tests
         working-directory: collaboration/dbp-electrician
         run: python3 -m unittest discover -s tests -v
 
-      - name: Query official ESCO API and compare candidate URI list
+      - name: Download and verify official ESCO occupation JSON
+        id: validate
+        continue-on-error: true
         working-directory: collaboration/dbp-electrician
         run: |
           python3 scripts/validate_esco_electrician.py \
             --candidates data/electrician_candidate_skills.csv \
             --out reports/action-evidence \
-            --selected-version "${{ inputs.selected_version }}" \
-            --timeout 15
+            --selected-version "${{ github.event_name == 'schedule' && 'latest' || inputs.selected_version || 'latest' }}" \
+            --timeout 20
 
-      - name: Upload evidence for human review (no Git commit or DB writes)
+      - name: Find most recent successful evidence run
+        id: previous
+        if: always()
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner, repo, workflow_id: 'esco-electrician-validation.yml',
+              status: 'completed', per_page: 30
+            });
+            for (const run of runs.data.workflow_runs) {
+              if (run.id === context.runId || run.conclusion !== 'success') continue;
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner, repo, run_id: run.id, per_page: 50
+              });
+              if (artifacts.data.artifacts.some(a =>
+                a.name === 'prejob-esco-electrician-evidence' && !a.expired)) {
+                core.setOutput('run_id', String(run.id));
+                break;
+              }
+            }
+
+      - name: Download previous evidence artifact if available
+        if: steps.previous.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: prejob-esco-electrician-evidence
+          run-id: ${{ steps.previous.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: collaboration/dbp-electrician/reports/previous
+
+      - name: Compare current snapshot with previous snapshot
+        if: always()
+        working-directory: collaboration/dbp-electrician
+        run: |
+          python3 scripts/compare_esco_runs.py \
+            --current reports/action-evidence/esco_electrician_http200_raw.json \
+            --previous reports/previous/esco_electrician_http200_raw.json \
+            --out reports/action-evidence/esco_change_proposals.json
+
+      - name: Upload evidence for Qwen and Adrian review (7 days)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: prejob-esco-electrician-evidence
           path: collaboration/dbp-electrician/reports/action-evidence/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 7
+
+      - name: Mark failed ESCO check after saving diagnostic artifacts
+        if: steps.validate.outcome == 'failure'
+        run: |
+          echo "ESCO request or validation failed; status NOT_TESTED; artifacts retained."
+          exit 1
