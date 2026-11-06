@@ -3,6 +3,12 @@
 name: PREJOB ESCO Electrician – automatic evidence check
 
 on:
+  # Initial bootstrap and future workflow-code changes only; never application pushes.
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/esco-electrician-validation.yml
   workflow_dispatch:
     inputs:
       selected_version:
