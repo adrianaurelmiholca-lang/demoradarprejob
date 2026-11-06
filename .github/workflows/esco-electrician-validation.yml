@@ -1,0 +1,53 @@
+# DRAFT ONLY — Directive 006. Do not merge into main or manually dispatch without approval.
+# No push, pull_request or schedule triggers; no commits or deployments.
+name: PREJOB ESCO Electrician – manual evidence check
+
+on:
+  workflow_dispatch:
+    inputs:
+      selected_version:
+        description: ESCO version to request
+        required: true
+        type: choice
+        options:
+          - latest
+          - v1.2.0
+        default: latest
+
+permissions:
+  contents: read
+
+jobs:
+  verify-esco:
+    # Defense in depth: even if accidentally installed on main, run only for the staging branch.
+    if: github.ref == 'refs/heads/work/dbp-bucuresti-multiai-2026-11-04'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out staging source (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run offline unit tests
+        working-directory: collaboration/dbp-electrician
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Query official ESCO API and compare candidate URI list
+        working-directory: collaboration/dbp-electrician
+        run: |
+          python3 scripts/validate_esco_electrician.py \
+            --candidates data/electrician_candidate_skills.csv \
+            --out reports/action-evidence \
+            --selected-version "${{ inputs.selected_version }}" \
+            --timeout 15
+
+      - name: Upload evidence for human review (no Git commit or DB writes)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prejob-esco-electrician-evidence
+          path: collaboration/dbp-electrician/reports/action-evidence/
+          if-no-files-found: warn
+          retention-days: 7
