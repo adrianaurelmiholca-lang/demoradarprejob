@@ -132,12 +132,16 @@ def main(argv=None):
     parser.add_argument('--timeout', type=float, default=12)
     parser.add_argument('--fixture', type=pathlib.Path, help='Local fixture for parser tests only; never official evidence')
     args = parser.parse_args(argv)
-    if args.selected_version not in ('latest', '1.2.1', '1.2.0', '1.1.2', '1.0.9'):
+    if args.selected_version not in ('latest', 'v1.2.0', 'v1.1.2', 'v1.0.9'):
         parser.error('Unsupported selected-version value')
     if args.timeout <= 0:
         parser.error('--timeout must be positive')
     rows = candidates(args.candidates)
     args.out.mkdir(parents=True, exist_ok=True)
+    # Prevent stale raw evidence from a previous successful execution being mistaken for this run.
+    previous_raw = args.out / 'esco_electrician_http200_raw.json'
+    if previous_raw.exists():
+        previous_raw.unlink()
     evidence_mode = 'fixture' if args.fixture else 'live'
     error = None
     status_code = None
@@ -157,6 +161,8 @@ def main(argv=None):
         if evidence_mode == 'live':
             (args.out / 'esco_electrician_http200_raw.json').write_bytes(body)
     except (urllib.error.URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        if isinstance(exc, urllib.error.HTTPError):
+            status_code = exc.code
         error = f'{type(exc).__name__}: {exc}'
         output = not_tested(rows)
     with (args.out / 'esco_electrician_validation.csv').open('w', newline='', encoding='utf-8-sig') as stream:
