@@ -27,3 +27,11 @@ python scripts/validate_esco_electrician.py --candidates data/electrician_candid
 3. `NOT_FOUND_IN_API` nu înseamnă că URI-ul nu există: înseamnă că nu a fost găsit în relațiile ocupației din răspunsul obținut.
 4. Datele nu sunt încă importate în DBP, nu există API cu plată și nu se modifică `main`, Cloudflare, Google Drive sau datele de producție.
 5. **Nu comiteți automat în GitHub** răspunsurile API sau artefactele de test fără verificarea provenienței și a permisiunilor.
+
+## Revizie 06.11.2026 — controlul probelor
+
+- Pentru verificarea versiunii pinuite folosiți `--selected-version v1.2.0`, conform formei documentate de portalul ESCO. Pentru versiunea dinamică folosiți `--selected-version latest`. Disponibilitatea unei versiuni este confirmată numai printr-un apel reușit, nu prin simpla acceptare de către script.
+- Nu presupuneți că `latest` și `v1.2.0` reprezintă același set de date și nu echivalați `status=released` cu o versiune exactă.
+- Dacă reutilizați directorul `--out`, validatorul șterge înainte de fiecare încercare orice fișier `esco_electrician_http200_raw.json` rămas de la executarea anterioară, evitând confundarea dovezilor vechi cu rezultate noi.
+- Raportul `esco_electrician_manifest.json` înregistrează codul HTTP în cazul unei erori HTTP; rezultatul pentru competențe rămâne `NOT_TESTED`.
+- Nu lansați acest script în GitHub Actions sau în producție fără o aprobare separată. Este destinat rulării locale/staging.
