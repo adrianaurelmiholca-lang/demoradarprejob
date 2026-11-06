@@ -56,6 +56,36 @@ class EscoCheckerTest(unittest.TestCase):
         result, _ = esco.verify(rows, self.fixture, 'live', 'sha', 'https://example.invalid')
         self.assertIn('SKILL_TYPE_MISMATCH', result[0]['quality_flags'])
 
+    def test_version_parameter_is_pinned_with_v_prefix(self):
+        from unittest.mock import patch
+        with patch.object(esco.urllib.request, 'urlopen', side_effect=RuntimeError('stop after URL capture')) as get:
+            with self.assertRaises(RuntimeError):
+                esco.fetch('v1.2.0', 1)
+            requested_url = get.call_args.args[0].full_url
+            self.assertIn('selectedVersion=v1.2.0', requested_url)
+
+    def test_failed_fetch_removes_old_raw_evidence(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temp:
+            raw = pathlib.Path(temp) / 'esco_electrician_http200_raw.json'
+            raw.write_text('{"this":"is stale"}', encoding='utf-8')
+            with patch.object(esco, 'fetch', side_effect=esco.urllib.error.URLError('mock DNS failure')):
+                rc = esco.main(['--candidates', str(ROOT / 'data/electrician_candidate_skills.csv'), '--out', temp])
+            self.assertEqual(rc, 2)
+            self.assertFalse(raw.exists())
+            metadata = json.loads((pathlib.Path(temp) / 'esco_electrician_manifest.json').read_text())
+            self.assertEqual(metadata['counts'], {'NOT_TESTED': 21})
+
+    def test_api_http_error_status_retained(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as temp:
+            error = esco.urllib.error.HTTPError('https://example.invalid', 500, 'server error', {}, None)
+            with patch.object(esco, 'fetch', side_effect=error):
+                rc = esco.main(['--candidates', str(ROOT / 'data/electrician_candidate_skills.csv'), '--out', temp])
+            self.assertEqual(rc, 2)
+            metadata = json.loads((pathlib.Path(temp) / 'esco_electrician_manifest.json').read_text())
+            self.assertEqual(metadata['http_status'], 500)
+
     def test_invalid_occupation(self):
         broken = copy.deepcopy(self.fixture)
         broken['uri'] = 'unexpected'
