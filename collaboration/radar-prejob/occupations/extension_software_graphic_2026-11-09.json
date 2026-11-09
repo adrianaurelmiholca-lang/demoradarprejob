@@ -1,0 +1,72 @@
+{
+  "project": "RADAR PREJOB",
+  "phase": "0",
+  "territory": "Municipiul București",
+  "generated_on": "2026-11-09",
+  "provenance": {
+    "source": "DBP ESCO — MASTER DATABASE (Google Drive)",
+    "drive_id": "1QFQi9TYH4jaloa490PGebCc-1C8dx451j0aEdTiBLPw",
+    "source_record_date": "2026-08-13"
+  },
+  "occupations": [
+    {
+      "prejob_id": "PREJOB-ESCO-OCC-0001",
+      "esco_uri": "http://data.europa.eu/esco/occupation/f2b15a0e-e65a-438a-affb-29b9d50b77d1",
+      "label_en": "software developer",
+      "label_ro": "dezvoltator de software",
+      "isco08": "2512",
+      "historic_relations_count": 108,
+      "historic_relations_breakdown": {
+        "essential_knowledge": 9,
+        "essential_skill": 15,
+        "optional_knowledge": 70,
+        "optional_skill": 14
+      },
+      "historic_relation_skill_uris_present": 0,
+      "status": "CANDIDATE_INVENTORY_UNVERIFIED",
+      "cor_candidates": [
+        {
+          "mapping_id": "COR-MAP-0001",
+          "cor": "251202",
+          "label": "programator"
+        },
+        {
+          "mapping_id": "COR-MAP-0002",
+          "cor": "251205",
+          "label": "inginer de sistem software"
+        }
+      ],
+      "isced_f_candidate": "0613"
+    },
+    {
+      "prejob_id": "PREJOB-ESCO-OCC-0002",
+      "esco_uri": "http://data.europa.eu/esco/occupation/69bcbb0a-8d80-4ecd-b0a4-9adea2a40de2",
+      "label_en": "graphic designer",
+      "label_ro": null,
+      "isco08": "2166",
+      "historic_relations_count": 0,
+      "historic_relation_skill_uris_present": 0,
+      "status": "OCCUPATION_CORE_REGISTERED_SKILLS_NOT_LOADED",
+      "cor_candidates": [
+        {
+          "mapping_id": "COR-MAP-0003",
+          "cor": "216611",
+          "label": "designer grafică (studii superioare)"
+        },
+        {
+          "mapping_id": "COR-MAP-0004",
+          "cor": "216601",
+          "label": "designer grafică (studii medii)"
+        }
+      ],
+      "isced_f_candidate": "0211"
+    }
+  ],
+  "rules": [
+    "No automatic ESCO↔COR equivalence",
+    "No public student-facing claims from unverified skill labels",
+    "Preserve Drive masters and existing IDs",
+    "No costs, personal data or production writes",
+    "Qwen technical review then Adrian semantic approval"
+  ]
+}
